@@ -130,10 +130,17 @@ class Buku:
         utilisasi = terpakai / kapasitas if kapasitas else 0.0
         kosong = max(0.0, kapasitas - terpakai)
 
+        # Kalimat saran ditulis sebagaimana orang berbicara, bukan sebagai
+        # istilah. "Tuas" dan "order rugi" benar secara teori, tetapi pemilik
+        # usaha batik tidak memakai kata-kata itu.
         if utilisasi >= 0.85:
-            kendala, tuas = "kapasitas", "naikkan harga, dahulukan untung/hari tertinggi"
+            kendala = "kapasitas"
+            tuas = ("harga boleh dinaikkan, dan kerjakan dulu motif yang "
+                    "untungnya paling besar per hari")
         else:
-            kendala, tuas = "permintaan", "tahan harga, hentikan order rugi, dorong motif cepat"
+            kendala = "permintaan"
+            tuas = ("tahan dulu harganya, jangan terima pesanan yang harganya "
+                    "di bawah biaya, dan kerjakan motif yang cepat selesai")
 
         return {
             "kendala": kendala,

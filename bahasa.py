@@ -152,13 +152,13 @@ TEMPLAT = {
         "jual_untung": "Tercatat. Biaya penuh {biaya} → untung {margin}, "
                        "setara {per_hari} per hari kerja.",
         "jual_rugi": "Tercatat. Biaya penuh {biaya} → RUGI {margin}. "
-                     "Harga ini {kurang} di bawah titik impas.",
+                     "Harga jualnya {kurang} lebih murah daripada biayanya.",
         "bayar": "Tercatat: pengeluaran {kategori} {nominal}.",
         "tanya_terima": "Biaya penuh {produk} {biaya}. Tawaran {tawaran} "
                         "masih untung {margin} ({per_hari} per hari kerja). "
                         "Layak diambil.",
         "tanya_tolak": "Biaya penuh {produk} {biaya}. Tawaran {tawaran} "
-                       "RUGI {margin}. Lantai harga Anda {lantai}.",
+                       "RUGI {margin}. Jangan dilepas di bawah {lantai}.",
         "jual_tanpa_harga": "{produk} tercatat terjual. Terjual berapa? "
                             "Sebutkan angkanya saja, mis. \"850rb\".",
         "beli_tanpa_harga": "{item} tercatat. Habis berapa? "
@@ -170,17 +170,19 @@ TEMPLAT = {
                             "belum bisa dihitung. Catat dulu beberapa penjualan.",
         "tanya_umum": "Yang bisa saya jawab sekarang:\n"
                       "• motif mana yang paling menguntungkan per hari kerja\n"
-                      "• layak tidaknya sebuah tawaran — sebutkan angkanya\n"
-                      "• biaya penuh & lantai harga per kain\n\n"
-                      "Biaya penuh saat ini {biaya}, lantai harga {lantai}.",
+                      "• sebuah tawaran untung atau rugi — sebutkan angkanya\n"
+                      "• biaya penuh & harga terendah per kain\n\n"
+                      "Biaya penuh saat ini {biaya}, jangan dijual di bawah {lantai}.",
         "tidak_paham": "Maaf, saya belum menangkap maksudnya. "
                        "Boleh diulang dengan kalimat lain?",
         "ringkasan_judul": "Ringkasan minggu ini",
-        "kendala_kapasitas": "Slot produksi penuh → kendala Anda: kapasitas. "
-                             "Naikkan harga, dahulukan untung per hari tertinggi.",
-        "kendala_permintaan": "Slot produksi kosong {kosong} hari → kendala Anda: "
-                              "permintaan, bukan kapasitas. Jangan naikkan harga "
-                              "dulu; dahulukan motif cepat.",
+        "kendala_kapasitas": "Waktu kerja sudah penuh — pesanan lebih banyak "
+                             "daripada yang sanggup dikerjakan. Harga boleh "
+                             "dinaikkan. Kerjakan dulu motif yang untungnya "
+                             "paling besar per hari.",
+        "kendala_permintaan": "Masih ada {kosong} hari kerja yang belum terisi — "
+                              "yang kurang pesanannya, bukan tenaganya. Tahan "
+                              "dulu harganya. Kerjakan motif yang cepat selesai.",
     },
     "crb": {
         "nama": "Cerbon",

@@ -137,9 +137,9 @@ with st.sidebar:
         format_func=lambda k: L.TEMPLAT[k]["nama"],
         help="Bahasa juga terdeteksi otomatis dari kalimat yang Anda tulis.")
     if st.session_state.bahasa == "crb":
-        st.caption("Ragam **bebasan** — ragam halus untuk yang dituakan.")
+        st.caption("Memakai bahasa halus, sebagaimana berbicara kepada orang yang dituakan.")
         if not L.VALIDASI_PENUTUR_ASLI:
-            st.warning("Kalimat Cirebon belum divalidasi penutur asli.", icon="⚠️")
+            st.warning("Kalimat Cirebon belum diperiksa penutur asli.", icon="⚠️")
 
     st.markdown(
         T.kartu("Biaya penuh per kain", f"""
@@ -148,7 +148,7 @@ with st.sidebar:
           <tr><td>Pewarna + energi</td><td align="right">{B.rupiah(P.pewarna_energi)}</td></tr>
           <tr><td>Tenaga {P.artisan_day_per_kain} hari</td>
               <td align="right">{B.rupiah(P.artisan_day_per_kain*P.upah_per_hari)}</td></tr>
-          <tr><td>Overhead</td><td align="right">{B.rupiah(P.overhead)}</td></tr>
+          <tr><td>Biaya lain-lain</td><td align="right">{B.rupiah(P.overhead)}</td></tr>
           <tr style="border-top:1px solid {T.SOGA_MUDA}">
             <td style="padding-top:5px"><b>BIAYA PENUH</b></td>
             <td align="right" style="padding-top:5px">
@@ -161,14 +161,14 @@ with st.sidebar:
 
     # ------------------------------------------------- KALIBRASI (Tahap 0)
     with st.expander("⚙️  Ubah harga & upah"):
-        st.caption("Tahap 0 · Kalibrasi. Semua angka di aplikasi ikut berubah "
-                   "seketika — biaya penuh, margin, lantai harga, diagnosa, "
-                   "sampai hasil solver.")
+        st.caption("Sesuaikan dengan usaha Anda. Semua angka di aplikasi ikut "
+                   "berubah seketika — biaya, untung, harga terendah, sampai "
+                   "saran pesanan.")
         bahan = st.number_input("Kain mori per lembar (Rp)", 0, 2_000_000,
                                 int(P.bahan), 5_000)
         pewarna = st.number_input("Pewarna + energi per kain (Rp)", 0, 2_000_000,
                                   int(P.pewarna_energi), 5_000)
-        overhead = st.number_input("Overhead per kain (Rp)", 0, 2_000_000,
+        overhead = st.number_input("Biaya lain-lain per kain (Rp)", 0, 2_000_000,
                                    int(P.overhead), 1_000)
         upah = st.number_input("Upah perajin per hari (Rp)", 0, 500_000,
                                int(P.upah_per_hari), 1_000,
@@ -176,7 +176,7 @@ with st.sidebar:
                                     f"{B.rupiah(B.UPAH_UMK_HARIAN)}/hari")
         hari = st.number_input("Hari kerja rata-rata per kain", 0.5, 40.0,
                                float(P.artisan_day_per_kain), 0.1)
-        kapasitas = st.number_input("Kapasitas artisan-day per minggu", 1, 200,
+        kapasitas = st.number_input("Hari kerja tersedia per minggu", 1, 200,
                                     int(P.kapasitas_minggu), 1)
 
         baru = P.ubah(bahan=bahan, pewarna_energi=pewarna, overhead=overhead,
@@ -265,7 +265,7 @@ with kol_logo:
     st.markdown(T.penyelenggara(), unsafe_allow_html=True)
 
 tab_chat, tab_papan, tab_solver, tab_info = st.tabs(
-    ["💬  Percakapan", "📊  Papan Angka", "🧮  Solver Bauran", "ℹ️  Cara Kerja"])
+    ["💬  Percakapan", "📊  Papan Angka", "🧮  Pilih Pesanan", "ℹ️  Cara Kerja"])
 
 
 # ============================================================== TAB PERCAKAPAN
@@ -524,7 +524,7 @@ with tab_chat:
             s = buku.statistik()
             baris.append(f"3. {s['jumlah_rugi']} dari {s['jumlah_terjual']} kain "
                          f"terjual di bawah biaya penuh ({s['porsi_rugi']:.0%}). "
-                         f"Lantai harga {B.rupiah(B.lantai_harga(p=P))}.")
+                         f"Jangan dijual di bawah {B.rupiah(B.lantai_harga(p=P))}.")
             kirim("kiri", "\n".join(baris), "RINGKASAN MINGGUAN", False,
                   st.session_state.bahasa)
             st.rerun()
@@ -540,46 +540,52 @@ with tab_papan:
     <div class="bar-pahlawan">
       <div><div class="n">{B.rupiah(s['untung_per_hari'])}</div>
            <div class="t">untung per hari kerja perajin<br>
-           <span style="opacity:.72">satuan yang benar untuk usaha yang dibatasi tenaga</span></div></div>
+           <span style="opacity:.72">ukuran yang tepat, sebab yang terbatas itu tenaga</span></div></div>
       <div class="pisah">▶</div>
       <div><div class="n">{s['porsi_rugi']:.0%}</div>
-           <div class="t">order terjual di bawah biaya penuh<br>
+           <div class="t">kain terjual lebih murah daripada biayanya<br>
            <span style="opacity:.72">{s['jumlah_rugi']} dari {s['jumlah_terjual']} kain</span></div></div>
       {AWAN_SUDUT}
     </div>""", unsafe_allow_html=True)
 
     a, b, c = st.columns(3)
-    a.markdown(T.kartu("Omzet", T.angka(B.rupiah(s["omzet"]), "seluruh kain terjual")),
+    a.markdown(T.kartu("Omzet", T.angka(B.rupiah(s["omzet"]), "uang masuk dari kain terjual")),
                unsafe_allow_html=True)
-    b.markdown(T.kartu("Laba", T.angka(B.rupiah(s["laba"]), "setelah biaya penuh",
+    b.markdown(T.kartu("Laba", T.angka(B.rupiah(s["laba"]), "sisa setelah semua biaya",
                                        "hijau" if s["laba"] >= 0 else "merah")),
                unsafe_allow_html=True)
-    c.markdown(T.kartu("Lantai harga",
-                       T.angka(B.rupiah(B.lantai_harga(p=P)), "titik impas per kain", "soga")),
+    c.markdown(T.kartu("Harga terendah",
+                       T.angka(B.rupiah(B.lantai_harga(p=P)), "jangan dijual di bawah ini", "soga")),
                unsafe_allow_html=True)
 
     st.write("")
     kiri, kanan = st.columns([1, 1.1])
 
     with kiri:
-        warna = "merah" if d["kendala"] == "kapasitas" else "soga"
-        nama = "KAPASITAS" if d["kendala"] == "kapasitas" else "PERMINTAAN"
-        ket = ("slot produksi penuh" if d["kendala"] == "kapasitas"
-               else f"slot kosong {d['slot_kosong']:.0f} artisan-day")
-        st.markdown(T.kartu("Diagnosa kendala", f"""
+        kapasitas_penuh = d["kendala"] == "kapasitas"
+        warna = "merah" if kapasitas_penuh else "soga"
+        # Kata "KAPASITAS"/"PERMINTAAN" diganti kalimat yang langsung berarti
+        # bagi pemilik usaha. Istilahnya boleh benar secara teori, tetapi kalau
+        # harus dijelaskan lebih dulu, ia gagal sebagai antarmuka.
+        nama = "WAKTU KERJA PENUH" if kapasitas_penuh else "PESANAN KURANG"
+        ket = ("pesanan lebih banyak daripada yang sanggup dikerjakan"
+               if kapasitas_penuh
+               else f"masih ada {d['slot_kosong']:.0f} hari kerja yang kosong")
+        st.markdown(T.kartu("Yang sedang menghambat", f"""
           {T.angka(nama, ket, warna)}
           <div style="margin:14px 0 6px 0;height:9px;background:#eee;border-radius:5px;overflow:hidden">
             <div style="width:{min(d['utilisasi'],1)*100:.0f}%;height:100%;
                         background:{T.BIRU};border-radius:5px"></div></div>
           <div style="font-size:11.5px;color:{T.ABU}">
-            Pemakaian kapasitas {d['utilisasi']:.0%} —
-            {d['terpakai']:.0f} dari {d['kapasitas']} artisan-day/minggu</div>
+            Waktu kerja perajin sudah terpakai {d['utilisasi']:.0%} —
+            {d['terpakai']:.0f} dari {d['kapasitas']} hari per minggu</div>
           <div style="margin-top:12px;padding:11px 13px;background:{T.BIRU_MUDA};
                       border-radius:9px;font-size:12.5px;color:{T.BIRU_TUA}">
-            <b>Tuas:</b> {d['tuas']}</div>
+            <b>Sebaiknya:</b> {d['tuas']}</div>
           <div style="font-size:11px;color:{T.ABU};margin-top:9px">
-            Diagnosa dijalankan <b>sebelum</b> memilih tuas. Kalau slot kosong,
-            menaikkan harga justru mematikan permintaan.</div>
+            Penyebabnya dicari <b>lebih dulu</b>, baru sarannya diberikan.
+            Kalau yang kurang justru pesanannya, menaikkan harga malah
+            membuat pembeli makin sepi.</div>
         """, utama=True), unsafe_allow_html=True)
 
     with kanan:
@@ -599,11 +605,11 @@ with tab_papan:
                     <div style="width:{w:.0f}%;height:100%;background:{c_bar};
                                 border-radius:4px"></div></div>
                 </div>""")
-            st.markdown(T.kartu("Peringkat motif — untung per hari kerja",
+            st.markdown(T.kartu("Motif mana yang paling menguntungkan",
                                 "".join(baris) + f"""
               <div style="font-size:11px;color:{T.ABU};margin-top:4px">
-                Diurutkan bukan menurut harga jual. Kain termahal belum tentu
-                paling menguntungkan bila pengerjaannya lama.</div>"""),
+                Diurutkan menurut untung per hari kerja, bukan harga jual. Kain
+                termahal belum tentu paling menguntungkan kalau lama dikerjakan.</div>"""),
                 unsafe_allow_html=True)
 
     st.write("")
@@ -628,8 +634,8 @@ with tab_papan:
             "Motif": st.column_config.TextColumn("Motif", required=True),
             "Hari kerja": st.column_config.NumberColumn(
                 "Hari kerja", min_value=0.5, max_value=60.0, step=0.5,
-                help="Selisih tanggal mulai dan selesai. Inilah yang membuat "
-                     "untung per hari kerja bisa dihitung."),
+                help="Berapa hari kain itu dikerjakan. Dari sinilah untung per "
+                     "hari kerja bisa dihitung."),
             "Harga jual": st.column_config.NumberColumn(
                 "Harga jual", min_value=0, step=10_000, format="Rp%d",
                 help="Kosongkan bila kain belum terjual."),
@@ -696,18 +702,17 @@ with tab_papan:
         st.dataframe(pd.DataFrame([{
             "Motif": k.produk, "Status": k.status,
             "Biaya penuh": B.rupiah(B.biaya_penuh(k.hari_kerja, P)),
-            "Margin": B.rupiah(k.hasil(P)["margin"]) if k.hasil(P) else "—",
-            "Untung/hari": B.rupiah(k.hasil(P)["untung_per_hari"]) if k.hasil(P) else "—",
+            "Untung": B.rupiah(k.hasil(P)["margin"]) if k.hasil(P) else "—",
+            "Untung per hari": B.rupiah(k.hasil(P)["untung_per_hari"]) if k.hasil(P) else "—",
         } for k in buku.kain]), hide_index=True, use_container_width=True)
 
 # ================================================================ TAB SOLVER
 with tab_solver:
     st.markdown(f"""
-    <div class="kicker">Optimisasi bauran produk · Integer Linear Programming</div>
+    <div class="kicker">Memilih pesanan yang paling menguntungkan</div>
     <div style="font-size:13px;color:{T.ABU};margin-bottom:4px">
-      Dalam kapasitas terbatas, motif apa saja yang sebaiknya dikerjakan supaya
-      total labanya paling besar? Bulat, bukan pecahan — kain tidak bisa
-      dikerjakan setengah.
+      Dengan waktu kerja yang terbatas, motif apa saja yang sebaiknya
+      dikerjakan supaya untungnya paling besar?
     </div>""", unsafe_allow_html=True)
 
     if "motif_solver" not in st.session_state:
@@ -730,9 +735,9 @@ with tab_solver:
                              num_rows="dynamic", key="editor_motif")
 
     kapasitas_solver = st.number_input(
-        "Kapasitas artisan-day pada periode ini", 1, 500,
+        "Hari kerja perajin yang tersedia", 1, 500,
         int(P.kapasitas_minggu), 1,
-        help="Sumber daya yang langka. Ini satu-satunya kendala yang mengikat.")
+        help="Inilah yang membatasi. Bukan modal, bukan bahan — tenaga.")
 
     motif = [S.Motif(str(r["Motif"]), float(r["Harga jual"]),
                      float(r["Hari kerja"]), int(r["Permintaan maks"]),
@@ -748,11 +753,11 @@ with tab_solver:
         st.markdown(f"""
         <div class="bar-pahlawan">
           <div><div class="n">{B.rupiah(h['laba'])}</div>
-               <div class="t">laba bauran optimal<br>
+               <div class="t">untung dari pilihan terbaik<br>
                <span style="opacity:.72">{h['metode']} · {h.get('waktu_ms','-')} ms</span></div></div>
           <div class="pisah">▶</div>
           <div><div class="n">{h['hari_terpakai']:.1f}</div>
-               <div class="t">artisan-day terpakai dari {kapasitas_solver}<br>
+               <div class="t">hari kerja terpakai dari {kapasitas_solver}<br>
                <span style="opacity:.72">sisa {kapasitas_solver-h['hari_terpakai']:.1f} hari</span></div></div>
           {AWAN_SUDUT}
         </div>""", unsafe_allow_html=True)
@@ -774,16 +779,16 @@ with tab_solver:
                     <span style="color:{warna};font-size:11px">
                       {B.rupiah(m.untung_per_hari(P))}/hari</span></span>
                 </div>""")
-            st.markdown(T.kartu("Bauran yang disarankan", "".join(baris),
+            st.markdown(T.kartu("Yang sebaiknya dikerjakan", "".join(baris),
                                 utama=True), unsafe_allow_html=True)
 
         with kanan_s:
             lp = h.get("lp")
             baris_b = []
             for nama, data, cat in [
-                ("LP — batas atas", lp, "peubah boleh pecahan"),
-                ("ILP — dipakai", h, "peubah bulat"),
-                ("Greedy — pembanding", g, "urut untung/hari"),
+                ("Batas tertinggi yang mungkin", lp, "kain boleh dihitung sebagian"),
+                ("Pilihan yang dipakai", h, "kain dihitung utuh"),
+                ("Cara sederhana, sebagai pembanding", g, "urut dari untung per hari"),
             ]:
                 if not data:
                     continue
@@ -807,29 +812,29 @@ with tab_solver:
                     f"<div style='margin-top:12px;padding:11px 13px;"
                     f"background:{T.BIRU_MUDA};border-radius:9px;font-size:12px;"
                     f"color:{T.BIRU_TUA}'>"
-                    f"<b>Ongkos kebulatan {B.rupiah(h['ongkos_kebulatan'])}</b> "
-                    f"({h['senjang_pct']:.1f}% dari batas atas LP).<br>"
-                    f"LP sanggup memakai {lp['hari_terpakai']:.1f} hari, ILP hanya "
+                    f"<b>Selisih {B.rupiah(h['ongkos_kebulatan'])}</b> "
+                    f"({h['senjang_pct']:.1f}% dari batas tertinggi).<br>"
+                    f"Secara hitungan bisa memakai {lp['hari_terpakai']:.1f} hari, nyatanya hanya "
                     f"{h['hari_terpakai']:.1f} — <b>{nganggur:.1f} hari kerja "
                     f"menganggur semata-mata karena kain tidak bisa dikerjakan "
                     f"sebagian.</b> Di situlah sisa kapasitas layak dicarikan "
                     f"pekerjaan tambahan.</div>")
             elif h.get("ongkos_kebulatan") == 0:
                 catatan = (f"<div style='margin-top:12px;font-size:12px;color:{T.ABU}'>"
-                           f"ILP menyentuh batas atas LP — bauran ini terbukti "
-                           f"optimum, bukan sekadar yang terbaik yang ditemukan.</div>")
+                           f"Pilihan ini sudah menyentuh batas tertinggi — terbukti "
+                           f"paling menguntungkan, bukan sekadar yang kebetulan ditemukan.</div>")
 
             selisih_g = h["selisih"]
             catatan += (
                 f"<div style='margin-top:10px;font-size:11.5px;color:{T.ABU}'>"
-                + (f"Solver unggul {B.rupiah(selisih_g)} atas heuristik greedy."
+                + (f"Cara ini unggul {B.rupiah(selisih_g)} dibanding cara sederhana."
                    if selisih_g > 0 else
-                   "Pada skala ini greedy sudah menyamai optimum — sesuai catatan "
-                   "pada batas yang jujur. Solver tetap diperlukan begitu motif, "
-                   "batas permintaan, dan komitmen bertambah.")
+                   "Pada jumlah sekecil ini, cara sederhana sudah menyamai hasil terbaik — "
+                   "sesuai catatan pada batas yang jujur. Perhitungan penuh baru terasa "
+                   "gunanya begitu motif dan pesanannya bertambah banyak.")
                 + "</div>")
 
-            st.markdown(T.kartu("LP · ILP · Greedy",
+            st.markdown(T.kartu("Perbandingan cara menghitung",
                                 "".join(baris_b) + catatan), unsafe_allow_html=True)
 
         with st.expander("Rumusan matematisnya"):
@@ -859,7 +864,7 @@ $$\\text{{komitmen}}_i \\;\\le\\; x_i \\;\\le\\; \\text{{permintaan}}_i$$
 
 LP selalu bernilai lebih baik atau sama dengan ILP, karena himpunan solusinya
 lebih longgar. Karena itu **hasil LP menjadi batas atas ILP** — kalau ILP
-menyentuh batas itu, kita tahu pasti tidak ada bauran lain yang lebih baik.
+menyentuh batas itu, kita tahu pasti tidak ada pilihan lain yang lebih baik.
 Selisih keduanya adalah **ongkos kebulatan**: kerugian yang timbul justru
 karena kain tidak bisa dikerjakan setengah.
 
@@ -872,32 +877,37 @@ Ubah di sidebar, hasil solver ikut berubah.
 with tab_info:
     k1, k2 = st.columns([1.15, 1])
     with k1:
-        st.markdown(T.kartu("Alur kerja", f"""
+        st.markdown(T.kartu("Cara memakainya", f"""
         <table style="width:100%;font-size:12.5px;border-collapse:collapse">
-          <tr><td style="padding:6px 0;width:118px"><b>0 · Kalibrasi</b></td>
-              <td>Enam pertanyaan sekali di awal → biaya penuh langsung terhitung</td></tr>
-          <tr><td style="padding:6px 0"><b>1 · Harian</b></td>
-              <td>Pemilik mengirim chat apa adanya. Tanpa formulir, tanpa menu</td></tr>
-          <tr><td style="padding:6px 0"><b>2 · Per kain</b></td>
-              <td><code>MULAI</code>+<code>SELESAI</code> → <b>hari kerja</b>;
-                  <code>JUAL</code> → margin & untung per hari</td></tr>
-          <tr><td style="padding:6px 0"><b>3 · Mingguan</b></td>
-              <td>Diagnosa kendala, lalu tiga kalimat saran</td></tr>
-          <tr><td style="padding:6px 0"><b>4 · Sewaktu-waktu</b></td>
-              <td>Bertanya sebelum memutuskan: <i>"ada nawar 550rb, ambil ga?"</i></td></tr>
+          <tr><td style="padding:6px 0;width:128px"><b>Sekali di awal</b></td>
+              <td>Enam pertanyaan tentang harga bahan dan upah. Setelah itu
+                  biaya per kain langsung ketahuan</td></tr>
+          <tr><td style="padding:6px 0"><b>Setiap hari</b></td>
+              <td>Cukup kirim pesan seperti biasa. Tidak ada formulir,
+                  tidak ada menu yang harus dipelajari</td></tr>
+          <tr><td style="padding:6px 0"><b>Setiap kain</b></td>
+              <td>Dari kabar "mulai" dan "selesai", lamanya pengerjaan
+                  terhitung sendiri. Begitu laku, untungnya langsung muncul</td></tr>
+          <tr><td style="padding:6px 0"><b>Setiap minggu</b></td>
+              <td>Dicari dulu apa yang sedang menghambat, baru diberi
+                  tiga saran</td></tr>
+          <tr><td style="padding:6px 0"><b>Kapan saja</b></td>
+              <td>Bertanya sebelum memutuskan:
+                  <i>"ada nawar 550rb, ambil ga?"</i></td></tr>
         </table>"""), unsafe_allow_html=True)
 
-        st.markdown(T.kartu("Pipeline satu pesan", f"""
-        <div style="font-size:12.5px;line-height:2;color:{T.BIRU_TUA}">
-          transkripsi → <b>ekstraksi LLM</b> → keyakinan rendah?
-          <b>konfirmasi satu ketuk</b> → jurnal → <b>mesin biaya ABC</b> →
-          <b>diagnosa kendala</b> → balasan
+        st.markdown(T.kartu("Apa yang terjadi di balik layar", f"""
+        <div style="font-size:12.5px;line-height:1.9;color:{T.BIRU_TUA}">
+          pesan dibaca → <b>ditangkap maksudnya</b> → kalau ragu,
+          <b>ditanyakan dulu</b> → dicatat → <b>biayanya dihitung</b> →
+          <b>dicari apa yang menghambat</b> → dijawab
         </div>
         <div style="font-size:12px;color:{T.ABU};margin-top:10px">
-          Konfirmasi satu ketuk itu disengaja. Ekstraksi AI pasti sesekali salah;
-          jalan keluarnya bukan mengejar model sempurna, melainkan membuat
-          koreksinya semurah satu ketukan. Kalau pemilik harus mengetik ulang,
-          ia berhenti memakai dalam sepekan.</div>""", warna_pil="soga"),
+          Bagian "kalau ragu, ditanyakan dulu" itu disengaja. Pembacaan otomatis
+          pasti sesekali meleset; jalan keluarnya bukan mengejar ketepatan
+          sempurna, melainkan membuat pembetulannya cukup satu ketukan. Kalau
+          pemiliknya harus mengetik ulang, ia berhenti memakai dalam sepekan.
+        </div>""", warna_pil="soga"),
             unsafe_allow_html=True)
 
     with k2:
@@ -907,19 +917,21 @@ with tab_info:
               <td align="right"><b>{B.rupiah(P.upah_per_hari)}</b>/hari</td></tr>
           <tr><td style="padding:5px 0">Biaya penuh per kain</td>
               <td align="right"><b style="color:{T.BIRU}">{B.rupiah(B.biaya_penuh(p=P))}</b></td></tr>
-          <tr><td style="padding:5px 0">Margin pada Rp675.000</td>
+          <tr><td style="padding:5px 0">Untung bila dijual Rp675.000</td>
               <td align="right"><b>{B.rupiah(P.harga_rata-B.biaya_penuh(p=P))}</b> (15%)</td></tr>
           <tr><td style="padding:5px 0">Untung per hari kerja</td>
               <td align="right"><b style="color:{T.BIRU}">Rp19.346</b></td></tr>
           <tr style="border-top:1px solid {T.SOGA_MUDA}">
-              <td style="padding:7px 0">Impas pada upah formal penuh</td>
+              <td style="padding:7px 0">Harga agar tidak rugi, bila perajin
+                  dibayar penuh sesuai upah minimum</td>
               <td align="right"><b style="color:{T.TERAKOTA}">
                   {B.rupiah(B.titik_impas_upah_formal(P))}</b></td></tr>
         </table>
         <div style="font-size:11px;color:{T.ABU};margin-top:8px">
-          Upah diancarkan ke UMK Kab. Cirebon 2025
+          Upah dihitung dari UMK Kab. Cirebon 2025
           ({B.rupiah(B.UMK_KAB_CIREBON_2025)}/bulan ÷ 26 hari × 0,65).
-          Impas menuntut harga <b>13% di atas</b> rata-rata saat ini.</div>"""),
+          Agar tidak rugi, harganya perlu <b>13% lebih tinggi</b> daripada
+          rata-rata sekarang.</div>"""),
             unsafe_allow_html=True)
 
         st.markdown(T.kartu("Batas yang jujur", f"""
@@ -930,18 +942,17 @@ with tab_info:
             terhapus bila aplikasi disebarkan ulang. Karena itu tombol
             <b>unduh cadangan</b> disediakan. Versi produksi memerlukan basis
             data permanen.<br>
-          • <b>Kode usaha adalah pembeda, bukan kunci.</b> Siapa pun yang
+          • <b>Kode usaha hanya pembeda, bukan kunci.</b> Siapa pun yang
             mengetahui kodenya dapat membuka buku itu. Memisahkan data antar
             UMKM sudah cukup untuk prototipe; produksi tetap membutuhkan
             proses masuk yang sebenarnya.<br>
-          • Ekstraksi punya dua jalur: <b>LLM</b> bila kredensialnya tersedia
-            pada peladen, dan <b>mesin aturan</b> bila tidak. Pemilik usaha
-            tidak pernah diminta mengatur apa pun — pergantiannya otomatis,
-            dan sistem tidak pernah mati saat didemokan.<br>
-          • Solver LP/ILP belum dipasang; pengurutan menurut untung per hari
-            memberi hasil sama untuk kasus sekecil ini.<br>
+          • Pembacaan pesan punya dua cara: memakai AI bila tersedia, dan cara
+            sederhana bila tidak. Pemilik usaha tidak pernah diminta mengatur
+            apa pun — pergantiannya otomatis, dan aplikasinya tidak pernah
+            berhenti bekerja.<br>
+          
           • Masukan suara belum tersedia.<br>
-          • Kalimat bahasa Cirebon <b>belum divalidasi penutur asli</b>.
+          • Kalimat bahasa Cirebon <b>belum diperiksa penutur asli</b>.
         </div>"""), unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ PENUTUP
