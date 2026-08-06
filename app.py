@@ -6,6 +6,7 @@ Studi kasus: UKM Silfi Batik Tulis, Desa Ciwaringin, Kabupaten Cirebon
 
 Jalankan:  streamlit run app.py
 """
+import json
 from datetime import date, timedelta
 
 import streamlit as st
@@ -13,6 +14,7 @@ import streamlit as st
 import bahasa as L
 import biaya as B
 import ekstraksi as E
+import simpanan as SIMP
 import solver as S
 import tampilan as T
 from buku import Buku, Kain, buku_contoh
@@ -41,16 +43,48 @@ st.set_page_config(
 st.markdown(T.CSS, unsafe_allow_html=True)
 
 # --------------------------------------------------------------------- STATE
-if "buku" not in st.session_state:
-    st.session_state.buku = buku_contoh()
+# Kode usaha diambil dari alamat (?kode=XXXXXX) supaya pemilik cukup menandai
+# tautannya. Penyegaran halaman, menutup tab, bahkan berganti peramban tidak
+# menghilangkan datanya — selama peladennya belum didaur ulang.
+def _siapkan_sesi():
+    kode = (st.query_params.get("kode") or "").strip().upper()
+
+    if kode and SIMP.ada(kode):                      # buku lama, pulihkan
+        b, p = Buku.dari_kamus(SIMP.muat(kode))
+    else:                                            # buku baru
+        kode = kode or SIMP.kode_baru()
+        b, p = buku_contoh(), B.BAKU
+        SIMP.simpan(kode, b.pakai(p).ke_kamus())
+
+    st.query_params["kode"] = kode
+    st.session_state.kode = kode
+    st.session_state.buku = b
+    st.session_state.p = p
     st.session_state.pesan = []
     st.session_state.bahasa = "id"
     st.session_state.tunggu_pilihan = None
-    st.session_state.p = B.BAKU          # parameter biaya yang sedang berlaku
+
+
+if "buku" not in st.session_state:
+    _siapkan_sesi()
 
 buku: Buku = st.session_state.buku
 P: B.Parameter = st.session_state.p
 buku.pakai(P)          # buku selalu memakai parameter kalibrasi terbaru
+
+
+def simpan_sekarang(b: Buku = None, p: B.Parameter = None) -> None:
+    """Tulis keadaan terkini ke penyimpanan. Dipanggil setiap kali data berubah.
+
+    Kegagalan menyimpan tidak boleh menghentikan aplikasi — pemilik usaha
+    lebih baik kehilangan satu simpanan daripada kehilangan seluruh layar.
+    """
+    try:
+        b = b or st.session_state.buku
+        p = p or st.session_state.p
+        SIMP.simpan(st.session_state.kode, b.pakai(p).ke_kamus())
+    except Exception:
+        pass
 
 
 def kirim(sisi, teks, tanda="", aturan=False, basa=None):
@@ -155,10 +189,55 @@ with st.sidebar:
         k1, k2 = st.columns(2)
         if k1.button("Terapkan", use_container_width=True, type="primary"):
             st.session_state.p = baru
+            simpan_sekarang(p=baru)
             st.rerun()
         if k2.button("Kembalikan", use_container_width=True):
             st.session_state.p = B.BAKU
+            simpan_sekarang(p=B.BAKU)
             st.rerun()
+
+    # ------------------------------------------------- KODE USAHA
+    st.markdown(
+        T.kartu("Kode usaha", f"""
+        <div style="font-size:26px;font-weight:800;color:{T.BIRU};
+                    letter-spacing:3px;text-align:center;margin:2px 0 6px">
+          {st.session_state.kode}</div>
+        <div style="font-size:11px;color:{T.ABU};line-height:1.5">
+          Data tersimpan otomatis dan menempel pada kode ini. Tandai halaman ini
+          (bookmark) — membukanya kembali memulihkan seluruh catatan, meski
+          peramban sudah ditutup.
+        </div>""", warna_pil="soga"),
+        unsafe_allow_html=True)
+
+    # ------------------------------------------------- CADANGAN DATA
+    # Lapis perlindungan paling sederhana, tanpa infrastruktur apa pun.
+    # Data tetap tersimpan otomatis di peladen, tetapi berkas cadangan ini
+    # memberi pemilik usaha kepemilikan penuh: datanya bisa dibawa pergi,
+    # dibuka sendiri, dan dipulihkan di mana saja.
+    with st.expander("💾  Cadangkan / pulihkan data"):
+        st.caption("Berkas cadangan berformat JSON — bisa dibuka dengan Notepad "
+                   "dan diperiksa isinya sendiri.")
+        st.download_button(
+            "⬇️  Unduh cadangan",
+            data=json.dumps(buku.ke_kamus(), ensure_ascii=False, indent=2),
+            file_name=f"canting-{date.today().isoformat()}.json",
+            mime="application/json",
+            use_container_width=True)
+
+        naik = st.file_uploader("Pulihkan dari berkas", type="json",
+                                label_visibility="collapsed")
+        if naik is not None and st.button("Pulihkan sekarang",
+                                          use_container_width=True):
+            try:
+                b2, p2 = Buku.dari_kamus(json.load(naik))
+                st.session_state.buku = b2
+                st.session_state.p = p2
+                st.session_state.pop("motif_solver", None)
+                simpan_sekarang(b2, p2)
+                st.success("Data dipulihkan.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Berkas tidak terbaca: {type(e).__name__}")
 
     st.write("")
     if T._logo_terpasang() is None:
@@ -171,6 +250,7 @@ with st.sidebar:
         st.session_state.buku = buku_contoh()
         st.session_state.pesan = []
         st.session_state.tunggu_pilihan = None
+        simpan_sekarang(b=st.session_state.buku)
         st.rerun()
 
 # ---------------------------------------------------------------------- HEAD
@@ -391,6 +471,7 @@ with tab_chat:
                     tunggu["pilihan_harga"] = []
                     st.session_state.tunggu_pilihan = None
                     terapkan(tunggu, f"{tunggu['jenis']} · dikonfirmasi · yakin 100%", False)
+                    simpan_sekarang()
                     st.rerun()
             if kols[-1].button("Batal", key="pilihbatal", use_container_width=True):
                 st.session_state.tunggu_pilihan = None
@@ -399,6 +480,7 @@ with tab_chat:
         pesan_baru = st.chat_input("Tulis apa adanya — tak perlu rapi…")
         if pesan_baru:
             proses(pesan_baru)
+            simpan_sekarang()
             st.rerun()
 
     with kol_alat:
@@ -418,6 +500,7 @@ with tab_chat:
             if st.button(f"**{label}**  \n{teks}", key=f"c{label}",
                          use_container_width=True):
                 proses(teks)
+                simpan_sekarang()
                 st.rerun()
 
         st.write("")
@@ -569,16 +652,19 @@ with tab_papan:
                              selesai=selesai, harga_jual=harga))
         buku.kain = baru
         st.session_state.pop("motif_solver", None)   # solver ikut memakai data baru
+        simpan_sekarang()
         st.rerun()
 
     if t2.button("Kembalikan data contoh", use_container_width=True):
         st.session_state.buku = buku_contoh().pakai(P)
         st.session_state.pop("motif_solver", None)
+        simpan_sekarang(b=st.session_state.buku)
         st.rerun()
 
     if t3.button("Kosongkan semua data", use_container_width=True):
         st.session_state.buku = Buku().pakai(P)
         st.session_state.pop("motif_solver", None)
+        simpan_sekarang(b=st.session_state.buku)
         st.rerun()
 
     # kolom turunan ditampilkan terpisah — tidak boleh diketik, karena dihitung
@@ -818,6 +904,15 @@ with tab_info:
         st.markdown(T.kartu("Batas yang jujur", f"""
         <div style="font-size:12px;line-height:1.7;color:{T.TINTA}">
           • Riwayat awal adalah <b>data contoh</b>, bukan pembukuan Silfi.<br>
+          • Data tersimpan otomatis dan bertahan melewati penyegaran halaman,
+            tetapi penyimpanan peladen ini bersifat <b>sementara</b> — data
+            terhapus bila aplikasi disebarkan ulang. Karena itu tombol
+            <b>unduh cadangan</b> disediakan. Versi produksi memerlukan basis
+            data permanen.<br>
+          • <b>Kode usaha adalah pembeda, bukan kunci.</b> Siapa pun yang
+            mengetahui kodenya dapat membuka buku itu. Memisahkan data antar
+            UMKM sudah cukup untuk prototipe; produksi tetap membutuhkan
+            proses masuk yang sebenarnya.<br>
           • Ekstraksi punya dua jalur: <b>LLM</b> bila kredensialnya tersedia
             pada peladen, dan <b>mesin aturan</b> bila tidak. Pemilik usaha
             tidak pernah diminta mengatur apa pun — pergantiannya otomatis,

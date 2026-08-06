@@ -180,6 +180,68 @@ class Buku:
         return sorted(hasil, key=lambda r: -r[1])
 
 
+    # ------------------------------------------------------ SIMPAN & PULIHKAN
+    def ke_kamus(self) -> dict:
+        """Ubah seluruh isi buku menjadi struktur yang bisa disimpan.
+
+        Tanggal ditulis sebagai teks ISO agar berkasnya tetap terbaca manusia —
+        pemilik usaha harus bisa membuka cadangannya sendiri dan melihat bahwa
+        itu memang datanya, bukan berkas gelap yang tak bisa diperiksa.
+        """
+        p = self.p or B.BAKU
+        return {
+            "versi": 1,
+            "disimpan": date.today().isoformat(),
+            "kain": [
+                {
+                    "produk": k.produk,
+                    "mulai": k.mulai.isoformat() if k.mulai else None,
+                    "selesai": k.selesai.isoformat() if k.selesai else None,
+                    "harga_jual": k.harga_jual,
+                }
+                for k in self.kain
+            ],
+            "pengeluaran": [
+                {**x, "tanggal": x["tanggal"].isoformat()
+                 if hasattr(x.get("tanggal"), "isoformat") else x.get("tanggal")}
+                for x in self.pengeluaran
+            ],
+            "kalibrasi": {
+                "bahan": p.bahan,
+                "pewarna_energi": p.pewarna_energi,
+                "overhead": p.overhead,
+                "upah_per_hari": p.upah_per_hari,
+                "artisan_day_per_kain": p.artisan_day_per_kain,
+                "kapasitas_minggu": p.kapasitas_minggu,
+            },
+        }
+
+    @staticmethod
+    def dari_kamus(data: dict) -> tuple["Buku", B.Parameter]:
+        """Pulihkan buku beserta kalibrasinya. Kembalikan (buku, parameter)."""
+        def tgl(s):
+            return date.fromisoformat(s) if s else None
+
+        b = Buku()
+        for k in data.get("kain", []):
+            b.kain.append(Kain(
+                produk=k.get("produk") or "tanpa nama",
+                mulai=tgl(k.get("mulai")),
+                selesai=tgl(k.get("selesai")),
+                harga_jual=k.get("harga_jual"),
+            ))
+        for x in data.get("pengeluaran", []):
+            y = dict(x)
+            if isinstance(y.get("tanggal"), str):
+                y["tanggal"] = tgl(y["tanggal"])
+            b.pengeluaran.append(y)
+
+        kal = data.get("kalibrasi") or {}
+        p = B.BAKU.ubah(**{k: v for k, v in kal.items()
+                           if k in B.BAKU.__dataclass_fields__})
+        return b.pakai(p), p
+
+
 def buku_contoh() -> Buku:
     """Riwayat awal supaya papan angka tidak kosong saat pertama dibuka.
 
