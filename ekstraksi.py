@@ -275,68 +275,35 @@ def ekstrak_claude(teks: str, key: str) -> tuple[dict | None, str]:
         return None, f"{type(e).__name__}: {e}"[:160]
 
 
+# Daftar model Gemini DIKUNCI dan berurutan, bukan dipilih otomatis.
+#
+# Deteksi otomatis sebelumnya berbahaya karena dua alasan yang terbukti saat
+# diuji langsung ke API:
+#   1. Model bisa TERDAFTAR tetapi tidak bisa dipanggil. "gemini-2.5-flash"
+#      muncul pada daftar model, namun generateContent membalas HTTP 404.
+#      Pemilih otomatis akan memilihnya dan sistem gagal tanpa sebab jelas.
+#   2. Perilaku sistem jadi berubah sendiri setiap Google merilis model baru —
+#      persis pada masa penjurian pun bisa berganti tanpa disadari.
+#
+# Urutan di bawah disusun dari hasil pengukuran nyata (kalimat uji yang sama):
+#   gemini-3.5-flash  2.327 ms, 364 token berpikir   <- tercepat, dipakai
+#   gemini-3.6-flash  4.371 ms, 628 token berpikir   <- cadangan, terverifikasi
+#   gemini-2.0-flash  cadangan generasi lama
+# Bila model teratas ditarik Google, sistem turun ke berikutnya sendiri.
+MODEL_GEMINI_URUT = (
+    "gemini-3.5-flash",
+    "gemini-3.6-flash",
+    "gemini-2.0-flash",
+)
+
 _MODEL_GEMINI_TERPILIH: dict[str, str] = {}     # singgahan per kunci
 
 
-def _skor_model(nama: str) -> tuple:
-    """Urutan pilihan model Gemini: Flash terbaru yang stabil.
-
-    Flash dipilih karena beban kerja di sini ringan — masukan satu kalimat,
-    keluaran JSON pendek. Varian pratayang dan eksperimental dihindari supaya
-    prototipe tidak mendadak rusak ketika Google mencabutnya.
-    """
-    n = nama.lower()
-    if "flash" not in n:
-        return (-1,)
-    versi = 0.0
-    for potong in n.replace("-", " ").split():
-        try:
-            versi = max(versi, float(potong))
-        except ValueError:
-            pass
-    return (
-        0 if any(k in n for k in ("preview", "exp", "thinking")) else 1,
-        0 if "lite" in n else 1,
-        versi,
-    )
-
-
-def _model_gemini(key: str) -> str:
-    """Tanyakan ke Google model apa saja yang tersedia, lalu pilih yang terbaik.
-
-    Nama model berubah dari waktu ke waktu. Menuliskannya tetap di dalam kode
-    berarti prototipe bisa mati hanya karena satu nama dicabut — jadi daftarnya
-    ditanyakan langsung, dan pilihan tetap di kode hanya dipakai bila
-    penanyaannya gagal.
-    """
-    if key in _MODEL_GEMINI_TERPILIH:
-        return _MODEL_GEMINI_TERPILIH[key]
-
-    import urllib.request
-
-    terpilih = PENYEDIA["gemini"]["model"]
-    try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
-        with urllib.request.urlopen(url, timeout=15) as tanggapan:
-            daftar = json.loads(tanggapan.read()).get("models", [])
-        layak = [m["name"].split("/")[-1] for m in daftar
-                 if "generateContent" in m.get("supportedGenerationMethods", [])]
-        flash = [n for n in layak if _skor_model(n)[0] >= 0]
-        if flash:
-            terpilih = max(flash, key=_skor_model)
-    except Exception:
-        pass                      # gagal menanyakan → pakai pilihan tetap
-
-    _MODEL_GEMINI_TERPILIH[key] = terpilih
-    return terpilih
-
-
-def ekstrak_gemini(teks: str, key: str) -> tuple[dict | None, str]:
-    """Dipanggil lewat REST agar tidak menambah pustaka baru saat disebarkan."""
+def _panggil_gemini(model: str, teks: str, key: str):
+    """Satu panggilan ke satu model. Kembalikan (data, galat, model_hilang)."""
     import urllib.error
     import urllib.request
 
-    model = _model_gemini(key)
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
            f"{model}:generateContent?key={key}")
     badan = json.dumps({
@@ -365,23 +332,49 @@ def ekstrak_gemini(teks: str, key: str) -> tuple[dict | None, str]:
         teks_jawab = "".join(b.get("text", "") for b in bagian if "text" in b)
 
         if not teks_jawab:
-            return None, f"keluaran kosong (finishReason={alasan_henti or 'tidak diketahui'})"
+            return None, f"keluaran kosong (finishReason={alasan_henti or '?'})", False
 
         try:
             data = _bersihkan_json(teks_jawab)
         except json.JSONDecodeError:
             if alasan_henti == "MAX_TOKENS":
-                return None, "JSON terpotong karena batas token — coba naikkan maxOutputTokens"
+                return None, "JSON terpotong karena batas token", False
             raise
 
         if data.get("jenis") not in JENIS_SAH:
-            return None, "jenis kejadian tidak dikenali"
+            return None, "jenis kejadian tidak dikenali", False
         data["mesin"] = model
-        return data, ""
+        return data, "", False
     except urllib.error.HTTPError as e:
-        return None, f"HTTP {e.code}: {e.read()[:120].decode('utf-8', 'ignore')}"
+        # 404 = model ditarik/tidak tersedia bagi kunci ini → coba model berikutnya.
+        # Galat lain (429 kuota, 400 permintaan) bukan salah modelnya.
+        return None, f"HTTP {e.code}: {e.read()[:100].decode('utf-8','ignore')}", e.code == 404
     except Exception as e:
-        return None, f"{type(e).__name__}: {e}"[:160]
+        return None, f"{type(e).__name__}: {e}"[:140], False
+
+
+def ekstrak_gemini(teks: str, key: str) -> tuple[dict | None, str]:
+    """Coba model sesuai URUTAN TERKUNCI, turun ke berikutnya hanya bila 404.
+
+    Model yang berhasil disinggahi agar panggilan berikutnya langsung tepat
+    sasaran — tanpa mengulangi percobaan yang sudah diketahui gagal.
+    """
+    urutan = list(MODEL_GEMINI_URUT)
+    tersimpan = _MODEL_GEMINI_TERPILIH.get(key)
+    if tersimpan in urutan:                      # dahulukan yang terbukti jalan
+        urutan.remove(tersimpan)
+        urutan.insert(0, tersimpan)
+
+    galat_terakhir = "tidak ada model Gemini yang tersedia"
+    for model in urutan:
+        data, galat, model_hilang = _panggil_gemini(model, teks, key)
+        if data is not None:
+            _MODEL_GEMINI_TERPILIH[key] = model
+            return data, ""
+        galat_terakhir = f"{model} → {galat}"
+        if not model_hilang:
+            break                                # bukan salah model; hentikan
+    return None, galat_terakhir
 
 
 def ekstrak(teks: str, api_key: str | None = None,
