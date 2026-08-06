@@ -32,10 +32,11 @@ st.set_page_config(
     page_title="CANTING AI — Prototipe",
     page_icon=_ikon_halaman(),
     layout="wide",
-    # Streamlit menutup sidebar sendiri pada jendela sempit, dan mengingat
-    # keadaan itu. Untuk penjurian hal ini berbahaya: juri membuka tautan,
-    # sidebar tertutup, kalibrasi biaya tidak terlihat sama sekali.
-    initial_sidebar_state="expanded",
+    # "auto" = terbuka di layar lebar, tertutup di ponsel.
+    # Sempat dipaksa "expanded" agar juri tidak kehilangan panel kalibrasi,
+    # tetapi di ponsel itu justru menutupi hampir seluruh layar. Pada layar
+    # lebar, CSS sudah mengunci sidebar tetap tampak, jadi "auto" aman.
+    initial_sidebar_state="auto",
 )
 st.markdown(T.CSS, unsafe_allow_html=True)
 

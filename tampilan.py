@@ -120,20 +120,16 @@ header[data-testid="stHeader"] {{ background:transparent; }}
    bisa dibuka lagi — dan di dalamnya ada panel kalibrasi biaya, inti demo ini.
    Kehilangan akses ke sana jauh lebih merugikan daripada kehilangan pilihan
    menyembunyikannya. */
-[data-testid="stSidebarCollapseButton"] {{ display:none !important; }}
-
-/* Menyembunyikan tombolnya saja TIDAK CUKUP: kalau sidebar terlanjur tertutup
-   sebelum aturan ini berlaku, penggunanya justru terkunci — tidak bisa membuka,
-   tombolnya pun sudah hilang. Maka geserannya dilumpuhkan langsung, sehingga
-   sidebar mustahil keluar layar dalam keadaan apa pun. */
-section[data-testid="stSidebar"] {{
-  transform:none !important;
-  visibility:visible !important;
-  min-width:300px !important;
-  max-width:300px !important;
-  margin-left:0 !important;
-  left:0 !important;
-}}
+/* CATATAN: dulu di sini ada aturan yang MENGUNCI sidebar agar tidak bisa
+   ditutup — dibuat ketika sidebar yang tertutup tidak bisa dibuka lagi.
+   Aturan itu sudah DICABUT, karena:
+     1. Penyebab sebenarnya bukan sidebarnya, melainkan `header {{height:0}}`
+        yang mengempiskan tombol buka menjadi 0x0. Itu sudah diperbaiki.
+     2. Penguncian itu justru merusak tampilan ponsel: sidebar 300px pada
+        layar 375px menyisakan 75px, dan isinya tertimbun di baliknya.
+     3. Melawan mekanik sidebar Streamlit tidak pernah benar-benar berhasil —
+        transform-nya dikendalikan dari luar jangkauan CSS kita.
+   Biarkan Streamlit mengatur sidebarnya sendiri. */
 .block-container {{ padding-top:1.6rem; padding-bottom:2rem; max-width:1400px; }}
 
 /* ---------------------------------------------------------------- KEPALA */
@@ -362,6 +358,44 @@ section[data-testid="stSidebar"] {{
 .stTabs [aria-selected="true"] {{ color:{BIRU} !important; }}
 .stTabs [data-baseweb="tab-highlight"] {{ background:{BIRU}; height:3px; }}
 section[data-testid="stSidebar"] {{ background:{KREM}; border-right:1px solid #ece3d5; }}
+
+/* ------------------------------------------------------------------ PONSEL
+   Juri hampir pasti membuka tautan ini dari ponsel. Pemilik UMKM sendiri
+   memakai WhatsApp, bukan halaman ini — tetapi kalau tampilannya berdesakan
+   saat dinilai, seluruh isinya tidak terbaca. */
+@media (max-width: 992px) {{
+  /* Sidebar diperlakukan sebagai LACI, bukan dinding: menyisakan sedikit isi
+     yang terlihat di kanan supaya jelas ia menimpa sementara dan bisa ditutup.
+     Kalau menutup seluruh lebar, pembukanya mengira itulah seluruh halaman. */
+  section[data-testid="stSidebar"] {{
+    width:84vw !important; min-width:0 !important; max-width:300px !important;
+    box-shadow:6px 0 26px rgba(0,0,0,.18);
+  }}
+
+  .block-container {{ padding-left:14px !important; padding-right:14px !important; }}
+  .judul {{ font-size:25px; letter-spacing:-.6px; }}
+  .subjudul {{ font-size:13.5px; }}
+  .garis-soga {{ width:100%; }}
+
+  /* blok penyelenggara pindah ke bawah judul, tidak lagi berdesakan di kanan */
+  .blok-penyelenggara {{ text-align:left; margin-top:8px; }}
+  .blok-penyelenggara img {{ margin-left:0 !important; }}
+
+  /* bar pahlawan menumpuk ke bawah; panah horizontal tidak masuk akal lagi */
+  .bar-pahlawan {{ flex-direction:column; align-items:flex-start; gap:14px;
+                   padding:16px 18px; }}
+  .bar-pahlawan .n {{ font-size:32px; }}
+  .bar-pahlawan .pisah {{ display:none; }}
+  .bar-pahlawan .awan {{ width:320px; height:240px; right:-70px; bottom:-120px; }}
+
+  /* ponsel mockup diperkecil supaya muat utuh tanpa menggulung ke samping */
+  .ponsel {{ max-width:100%; padding:8px; border-radius:28px; }}
+  .layar {{ border-radius:22px; }}
+  .wa-isi {{ max-height:400px; }}
+
+  .kartu {{ padding:24px 15px 15px 15px; }}
+  .kicker {{ font-size:11px; }}
+}}
 div[data-testid="stDataFrame"] {{ border:1px solid {SOGA_MUDA}; border-radius:10px; }}
 hr {{ border-color:#eee; }}
 </style>
