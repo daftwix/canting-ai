@@ -67,6 +67,13 @@ LOGO = T.logo_canting()
 IKON = T.ikon_canting()
 KAIN = T.kain_megamendung()
 
+# HTML motif sudut disiapkan sebagai variabel biasa, BUKAN langsung di dalam
+# ekspresi f-string. Python 3.11 (versi yang dipakai untuk deploy, demi
+# kecocokan OR-Tools) melarang backslash di dalam kurung kurawal f-string;
+# tanda kutip yang di-escape (\") pada style="..." melanggar aturan itu.
+AWAN_SUDUT = (f"<div class='awan' style=\"background-image:url('{KAIN}')\">"
+             f"</div>") if KAIN else ""
+
 with st.sidebar:
     if LOGO:
         st.markdown(
@@ -454,7 +461,7 @@ with tab_papan:
       <div><div class="n">{s['porsi_rugi']:.0%}</div>
            <div class="t">order terjual di bawah biaya penuh<br>
            <span style="opacity:.72">{s['jumlah_rugi']} dari {s['jumlah_terjual']} kain</span></div></div>
-      {("<div class='awan' style=\"background-image:url('" + KAIN + "')\"></div>") if KAIN else ""}
+      {AWAN_SUDUT}
     </div>""", unsafe_allow_html=True)
 
     a, b, c = st.columns(3)
@@ -639,7 +646,7 @@ with tab_solver:
           <div><div class="n">{h['hari_terpakai']:.1f}</div>
                <div class="t">artisan-day terpakai dari {kapasitas_solver}<br>
                <span style="opacity:.72">sisa {kapasitas_solver-h['hari_terpakai']:.1f} hari</span></div></div>
-          {("<div class='awan' style=\"background-image:url('" + KAIN + "')\"></div>") if KAIN else ""}
+          {AWAN_SUDUT}
         </div>""", unsafe_allow_html=True)
 
         kiri_s, kanan_s = st.columns([1.15, 1])
