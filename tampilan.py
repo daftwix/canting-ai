@@ -110,7 +110,21 @@ span[class*="material"], i[class*="material"], [data-testid*="Icon"],
    height:0 membuat tombol buka-sidebar di dalamnya berukuran 0x0: terlihat
    menurut CSS, tetapi mustahil diklik. */
 header[data-testid="stHeader"] {{ background:transparent; }}
-[data-testid="stToolbar"], [data-testid="stDecoration"] {{ display:none; }}
+[data-testid="stDecoration"] {{ display:none; }}
+
+/* JANGAN sembunyikan stToolbar — TOMBOL BUKA SIDEBAR ADA DI DALAMNYA.
+   Menyetel display:none pada toolbar membuat tombol itu berukuran 0x0,
+   sehingga sidebar yang sudah ditutup TIDAK BISA dibuka lagi selamanya.
+   Yang perlu disembunyikan hanya menu titik-tiga dan tombol Deploy;
+   toolbarnya sendiri harus tetap hidup. */
+[data-testid="stToolbar"] {{ display:flex !important; }}
+[data-testid="stToolbarActions"],
+[data-testid="stAppDeployButton"],
+[data-testid="stMainMenu"] {{ display:none !important; }}
+[data-testid="stExpandSidebarButton"] {{
+  display:flex !important; width:auto !important; height:auto !important;
+  min-width:34px; min-height:34px; opacity:1 !important; visibility:visible !important;
+}}
 
 /* Tombol tutup-sidebar sengaja DIMATIKAN — ini keputusan sadar, bukan kelalaian.
    Streamlit menutup sidebar dengan translateX(-300px), dan tombolnya sendiri
@@ -120,16 +134,22 @@ header[data-testid="stHeader"] {{ background:transparent; }}
    bisa dibuka lagi — dan di dalamnya ada panel kalibrasi biaya, inti demo ini.
    Kehilangan akses ke sana jauh lebih merugikan daripada kehilangan pilihan
    menyembunyikannya. */
-/* CATATAN: dulu di sini ada aturan yang MENGUNCI sidebar agar tidak bisa
-   ditutup — dibuat ketika sidebar yang tertutup tidak bisa dibuka lagi.
-   Aturan itu sudah DICABUT, karena:
-     1. Penyebab sebenarnya bukan sidebarnya, melainkan `header {{height:0}}`
-        yang mengempiskan tombol buka menjadi 0x0. Itu sudah diperbaiki.
-     2. Penguncian itu justru merusak tampilan ponsel: sidebar 300px pada
-        layar 375px menyisakan 75px, dan isinya tertimbun di baliknya.
-     3. Melawan mekanik sidebar Streamlit tidak pernah benar-benar berhasil —
-        transform-nya dikendalikan dari luar jangkauan CSS kita.
-   Biarkan Streamlit mengatur sidebarnya sendiri. */
+/* Pada LAYAR LEBAR, tombol tutup sidebar dimatikan.
+   Alasannya: Streamlit versi ini tidak menampilkan tombol buka yang bisa
+   diklik setelah sidebar tertutup — elemennya bahkan hilang dari DOM. Sekali
+   ditutup, panel kalibrasi biaya di dalamnya menjadi tidak terjangkau.
+   Melumpuhkan geserannya lewat CSS sudah dicoba dan gagal: transform sidebar
+   dikendalikan di luar jangkauan CSS kita.
+
+   Menutup akses ke tombol tutup ini AMAN, karena keadaan tertutup TIDAK
+   tersimpan — memuat ulang halaman selalu mengembalikan sidebar. Jadi tidak
+   ada jalan buntu yang permanen.
+
+   Di ponsel tombol ini justru DIBIARKAN hidup: di sana sidebar memang laci
+   yang harus bisa ditutup untuk membaca isinya. */
+@media (min-width: 993px) {{
+  [data-testid="stSidebarCollapseButton"] {{ display:none !important; }}
+}}
 .block-container {{ padding-top:1.6rem; padding-bottom:2rem; max-width:1400px; }}
 
 /* ---------------------------------------------------------------- KEPALA */
