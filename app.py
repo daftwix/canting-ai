@@ -375,6 +375,14 @@ def terapkan(hasil, tanda, pakai_aturan=True):
                                 kurang=B.rupiah(abs(h["margin"]))),
                   tanda, pakai_aturan, basa)
 
+    elif jenis == "PESAN":
+        pesan = dampak.get("pesanan")
+        kirim("kiri", balas("pesan",
+                            produk=(pesan.produk if pesan else None)
+                                   or hasil.get("produk") or "kain",
+                            qty=(pesan.qty if pesan else hasil.get("qty")) or 1),
+              tanda, pakai_aturan, basa)
+
     elif jenis == "BAYAR":
         kirim("kiri", balas("bayar", kategori=hasil.get("kategori") or "lain",
                             nominal=B.rupiah(dampak.get("nominal", 0))),
@@ -417,6 +425,14 @@ def terapkan(hasil, tanda, pakai_aturan=True):
     # daripada mengaku tidak paham: pengguna tidak tahu harus berbuat apa.
     if len(st.session_state.pesan) == jumlah_sebelum:
         kirim("kiri", balas("tidak_paham"), tanda, pakai_aturan, basa)
+
+    # Kejadian ini mengubah data yang dibaca Solver Pesanan (Buku.kain lewat
+    # MULAI/SELESAI/JUAL, atau Buku.pesanan lewat PESAN). motif_solver hanya
+    # dihitung sekali per pembukaan tab dan disinggahi setelahnya — tanpa
+    # baris ini, perubahan lewat chat tidak akan terlihat di tab Solver
+    # sampai pengguna mengedit tabelnya secara manual.
+    if jenis in ("MULAI", "SELESAI", "JUAL", "PESAN"):
+        st.session_state.pop("motif_solver", None)
 
 
 with tab_chat:
@@ -495,6 +511,7 @@ with tab_chat:
             ("Terjual — untung", "laku 1 kain megamendung 850rb"),
             ("Terjual — RUGI", "sogan payu 480rb"),
             ("Menawar sebelum ambil", "ada yang nawar 550rb buat kain sogan, ambil ga?"),
+            ("Pesanan masuk (DP)", "ada yang DP 3 kain megamendung"),
         ]
         for label, teks in contoh:
             if st.button(f"**{label}**  \n{teks}", key=f"c{label}",
@@ -727,6 +744,9 @@ with tab_solver:
     import pandas as pd
 
     st.markdown("**Data motif** — ubah angkanya langsung di tabel")
+    st.caption("Kolom **Komitmen** terisi sendiri dari pesanan yang tercatat "
+              "lewat percakapan (DP, pre-order). Boleh diubah manual di sini "
+              "juga.")
     df_in = pd.DataFrame([{
         "Motif": m.nama, "Harga jual": int(m.harga), "Hari kerja": m.hari_kerja,
         "Permintaan maks": m.permintaan, "Komitmen": m.komitmen,

@@ -147,6 +147,9 @@ TEMPLAT = {
                   "beli apa, mulai garap apa, laku berapa.",
         "beli": "Tercatat: {item} {qty} × {harga}. Total {total}.",
         "beli_ragu": "Saya catat {harga} dulu ya (bisa dikoreksi).",
+        "pesan": "Tercatat: pesanan {produk} {qty} kain. Belum dikerjakan, "
+                "tapi sudah ikut diperhitungkan saat memilih order mana "
+                "yang dikerjakan duluan.",
         "mulai": "Tercatat: mulai mengerjakan {produk}, {tanggal}.",
         "selesai": "Tercatat: {produk} selesai — {hari} hari kerja.",
         "jual_untung": "Tercatat. Biaya penuh {biaya} → untung {margin}, "
@@ -191,6 +194,9 @@ TEMPLAT = {
                   "tumbas napa, miwiti damel napa, pajeng pinten.",
         "beli": "Sampun kacatet: {item} {qty} × {harga}. Gunggungipun {total}.",
         "beli_ragu": "Kula catet {harga} rumiyin nggih (saged dipun leresaken).",
+        "pesan": "Sampun kacatet: pesenan {produk} {qty} kain. Dereng "
+                "dipun damel, nanging sampun kaétang kangge milih order "
+                "ingkang dipun garap rumiyin.",
         "mulai": "Sampun kacatet: miwiti damel {produk}, {tanggal}.",
         "selesai": "Nggih, sampun kacatet — {produk} rampung. {hari} dinten kerja.",
         "jual_untung": "Sampun kacatet. Waragad sedaya {biaya} → bathi {margin}, "

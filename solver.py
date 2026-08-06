@@ -166,18 +166,43 @@ def optimalkan(motif: list[Motif], kapasitas: float,
 
 
 def motif_dari_buku(buku, p: B.Parameter | None = None) -> list[Motif]:
-    """Susun daftar motif dari riwayat penjualan yang sudah tercatat."""
+    """Susun daftar motif dari riwayat penjualan, dilengkapi komitmen pesanan.
+
+    Komitmen TIDAK ditempelkan ke objek Motif dari luar — objek ini dibangun
+    ulang dari nol setiap Solver Pesanan dibuka, sehingga apa pun yang
+    ditempelkan langsung akan hilang lagi. Sumber kebenarannya adalah
+    Buku.pesanan, dibaca lewat Buku.komitmen_per_motif() setiap kali fungsi
+    ini dipanggil.
+    """
+    p = p or B.BAKU
     kumpul: dict[str, list[tuple[float, float]]] = {}
     for k in buku.kain:
         if k.harga_jual:
             kumpul.setdefault(k.produk, []).append((k.harga_jual, k.hari_kerja))
 
+    komitmen = buku.komitmen_per_motif() if hasattr(buku, "komitmen_per_motif") else {}
+
     motif = []
     for nama, catatan in kumpul.items():
         harga = sum(c[0] for c in catatan) / len(catatan)
         hari = sum(c[1] for c in catatan) / len(catatan)
+        wajib = komitmen.pop(nama, 0)
+        # batas permintaan dinaikkan otomatis bila komitmennya sendiri sudah
+        # melebihi batas baku 6 — komitmen tidak boleh terpotong oleh batas
+        # atas yang sekadar asumsi.
         motif.append(Motif(nama=nama, harga=round(harga, -3),
-                           hari_kerja=round(hari, 1), permintaan=6))
+                           hari_kerja=round(hari, 1),
+                           permintaan=max(6, wajib + 2), komitmen=wajib))
+
+    # Motif yang SUDAH dipesan tetapi BELUM pernah tercatat terjual — harga
+    # dan lama pengerjaannya belum diketahui, jadi dipakai angka baku sebagai
+    # taksiran awal. Sengaja tidak disembunyikan begitu saja: tanpa baris ini,
+    # pesanan untuk motif baru akan terlewat oleh solver.
+    for nama, wajib in komitmen.items():
+        motif.append(Motif(nama=nama, harga=B.BAKU.harga_rata,
+                           hari_kerja=B.BAKU.artisan_day_per_kain,
+                           permintaan=max(6, wajib + 2), komitmen=wajib))
+
     return motif
 
 

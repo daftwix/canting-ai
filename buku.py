@@ -44,9 +44,22 @@ class Kain:
 
 
 @dataclass
+class Pesanan:
+    """Janji kerja di masa depan — DP/pre-order. BUKAN kain: belum dikerjakan,
+    apalagi terjual. Hidupnya terpisah dari Kain karena siklusnya beda: satu
+    Pesanan bisa berubah jadi beberapa Kain seiring perajin mengerjakannya,
+    dan sebagian bisa batal tanpa pernah jadi kain sama sekali.
+    """
+    produk: str
+    qty: int
+    tanggal: date | None = None
+
+
+@dataclass
 class Buku:
     kain: list[Kain] = field(default_factory=list)
     pengeluaran: list[dict] = field(default_factory=list)
+    pesanan: list[Pesanan] = field(default_factory=list)
     riwayat: list[dict] = field(default_factory=list)
     p: B.Parameter | None = None      # parameter biaya yang sedang berlaku
 
@@ -102,6 +115,12 @@ class Buku:
             dampak["kain"] = k
             dampak["hasil"] = k.hasil(self.p)
 
+        elif jenis == "PESAN":
+            pesan = Pesanan(produk=produk or "tanpa nama",
+                            qty=e.get("qty") or 1, tanggal=hari_ini)
+            self.pesanan.append(pesan)
+            dampak["pesanan"] = pesan
+
         elif jenis in ("BELI", "BAYAR"):
             self.pengeluaran.append({
                 "tanggal": hari_ini,
@@ -112,6 +131,27 @@ class Buku:
 
         self.riwayat.append({"tanggal": hari_ini, **e})
         return dampak
+
+    # ---------------------------------------------------------------- pesanan
+    def komitmen_per_motif(self) -> dict[str, int]:
+        """Jumlah kain yang SUDAH DIJANJIKAN, dikelompokkan per motif.
+
+        Ini satu-satunya jalan resmi bagi Solver Pesanan (solver.py) untuk
+        mengetahui komitmen — bukan dengan menyuntikkan angka langsung ke
+        objek Motif dari luar. Objek Motif dibangun ulang dari nol setiap
+        Solver Pesanan dibuka (lihat solver.motif_dari_buku), sehingga
+        komitmennya HARUS dihitung ulang dari sumber data yang bertahan
+        (Buku.pesanan), bukan ditempelkan ke objek yang berumur pendek.
+
+        Batas yang jujur: pesanan yang sudah dikerjakan (menjadi Kain) TIDAK
+        otomatis dikurangi dari sini — prototipe ini belum menautkan satu
+        Pesanan ke Kain tertentu. Untuk demo skala kecil ini cukup; versi
+        produksi perlu melacak pesanan mana yang sudah terpenuhi.
+        """
+        hasil: dict[str, int] = {}
+        for p in self.pesanan:
+            hasil[p.produk] = hasil.get(p.produk, 0) + p.qty
+        return hasil
 
     # -------------------------------------------------------------- diagnosis
     def artisan_day_terpakai(self, sejak: date | None = None) -> float:
@@ -213,6 +253,11 @@ class Buku:
                  if hasattr(x.get("tanggal"), "isoformat") else x.get("tanggal")}
                 for x in self.pengeluaran
             ],
+            "pesanan": [
+                {"produk": ps.produk, "qty": ps.qty,
+                 "tanggal": ps.tanggal.isoformat() if ps.tanggal else None}
+                for ps in self.pesanan
+            ],
             "kalibrasi": {
                 "bahan": p.bahan,
                 "pewarna_energi": p.pewarna_energi,
@@ -242,6 +287,12 @@ class Buku:
             if isinstance(y.get("tanggal"), str):
                 y["tanggal"] = tgl(y["tanggal"])
             b.pengeluaran.append(y)
+        for ps in data.get("pesanan", []):
+            b.pesanan.append(Pesanan(
+                produk=ps.get("produk") or "tanpa nama",
+                qty=ps.get("qty") or 1,
+                tanggal=tgl(ps.get("tanggal")),
+            ))
 
         kal = data.get("kalibrasi") or {}
         p = B.BAKU.ubah(**{k: v for k, v in kal.items()

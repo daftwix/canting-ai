@@ -180,6 +180,66 @@ periksa("penjualan menempel pada motif yang benar",
         "dikerjakan — salah kain berarti salah hari kerja")
 
 
+# ===================================================== 5b. PESAN & KOMITMEN
+KALIMAT_PESAN = [
+    ("ada yang DP 3 kain megamendung", "megamendung", 3),
+    ("pesenan 5 wadasan masuk", "wadasan", 5),
+    ("ada pre-order sogan 2", "sogan", 2),
+]
+for teks, produk_harus, qty_harus in KALIMAT_PESAN:
+    h = E.ekstrak_aturan(teks)
+    periksa(f"PESAN terdeteksi · {teks[:30]}…",
+            h["jenis"] == "PESAN" and h.get("qty") == qty_harus,
+            "consultant AI sempat mengusulkan menambah intent PESAN; "
+            "ini menguncinya supaya tidak diam-diam berhenti terdeteksi",
+            f"dapat jenis={h['jenis']} qty={h.get('qty')}, "
+            f"harusnya PESAN/{qty_harus}")
+
+# JUAL tidak boleh disalahartikan sebagai PESAN — kain yang SUDAH terjual
+# beda siklus hidup dari yang BARU dipesan.
+h = E.ekstrak_aturan("laku 3 kain megamendung 900rb")
+periksa("JUAL tidak tertukar dengan PESAN", h["jenis"] == "JUAL",
+        "kalau tertukar, kain yang sudah terjual malah dihitung dua kali "
+        "sebagai komitmen yang belum dikerjakan")
+
+# Komitmen harus lahir dari Buku.pesanan, BUKAN ditempel ke objek Motif dari
+# luar — objek Motif dibangun ulang dari nol setiap Solver Pesanan dibuka,
+# jadi apa pun yang ditempelkan langsung akan hilang lagi.
+b3p = Buku().pakai(B.BAKU)
+b3p.catat({"jenis": "PESAN", "produk": "megamendung", "qty": 3})
+b3p.catat({"jenis": "PESAN", "produk": "megamendung", "qty": 2})
+komit = b3p.komitmen_per_motif()
+periksa("komitmen terkumpul per motif dari Buku.pesanan",
+        komit.get("megamendung") == 5,
+        "dua PESAN untuk motif yang sama harus terjumlah, bukan saling timpa",
+        f"dapat {komit}")
+
+motif_baru = S.motif_dari_buku(b3p, B.BAKU)
+m_megamendung = next((m for m in motif_baru if m.nama == "megamendung"), None)
+# b3p sudah dikenai DUA kejadian PESAN sebelumnya (3 + 2), jadi komitmennya
+# yang benar adalah 5 — sama seperti pada pemeriksaan komitmen_per_motif().
+periksa("motif TANPA riwayat penjualan tetap muncul bila sudah dipesan",
+        m_megamendung is not None and m_megamendung.komitmen == 5,
+        "consultant AI mengusulkan menempel komitmen ke Motif yang sudah "
+        "ada — tetapi motif yang belum pernah terjual pun harus tetap "
+        "muncul di solver begitu ada pesanannya",
+        f"dapat {m_megamendung}")
+
+hasil_pesan = S.optimalkan(motif_baru, 18, B.BAKU)
+periksa("solver menghormati komitmen sebagai batas bawah",
+        hasil_pesan["pilihan"].get("megamendung", 0) >= 5,
+        "kalau komitmen diabaikan, solver bisa menyarankan MENGERJAKAN "
+        "LEBIH SEDIKIT daripada yang sudah dijanjikan ke pembeli",
+        f"pilihan megamendung = {hasil_pesan['pilihan'].get('megamendung')}")
+
+# Bolak-balik cadangan tidak boleh menjatuhkan pesanan
+b4p, _ = Buku.dari_kamus(b3p.ke_kamus())
+periksa("cadangan memulihkan pesanan",
+        b4p.komitmen_per_motif().get("megamendung") == 5,
+        "pesanan yang hilang saat dipulihkan berarti komitmen ke pembeli "
+        "ikut hilang tanpa jejak")
+
+
 # ============================================================== 6. SOLVER
 b2 = buku_contoh().pakai(B.BAKU)
 hasil = S.optimalkan(S.motif_dari_buku(b2, B.BAKU), 18, B.BAKU)

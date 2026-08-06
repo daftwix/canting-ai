@@ -11,10 +11,17 @@ Dua jalur:
 Jalur cadangan itu disengaja: demo yang mati di depan juri lebih merugikan
 daripada demo yang sedikit lebih sederhana.
 
-Enam jenis kejadian sudah cukup untuk menghitung seluruh angka pada proposal:
-  BELI · MULAI · SELESAI · JUAL · BAYAR · TANYA
+Tujuh jenis kejadian sudah cukup untuk menghitung seluruh angka pada proposal:
+  BELI · MULAI · SELESAI · JUAL · BAYAR · TANYA · PESAN
 Pasangan MULAI+SELESAI itulah yang melahirkan "hari kerja" — variabel yang
 selama ini tidak pernah ada di UMKM mana pun.
+
+PESAN itu beda dari JUAL: PESAN adalah janji kerja di masa depan (DP,
+pre-order, "pesenan masuk") — belum ada kain yang dikerjakan, apalagi
+terjual. JUAL adalah kain yang SUDAH terjual. Membedakan dua ini penting
+karena PESAN menjadi "komitmen" bagi Solver Pesanan (solver.py): kain yang
+sudah dijanjikan harus diutamakan sebelum kapasitas sisa dipakai untuk
+motif lain, betapa pun untung/harinya lebih rendah.
 """
 from __future__ import annotations
 
@@ -26,7 +33,8 @@ from bahasa import ISTILAH_BATIK, MOTIF, BILANGAN, PENGALI, deteksi_bahasa
 
 MODEL = os.environ.get("CANTING_MODEL", "claude-sonnet-5")
 
-JENIS_SAH = {"BELI", "MULAI", "SELESAI", "JUAL", "BAYAR", "TANYA", "TIDAK_PAHAM"}
+JENIS_SAH = {"BELI", "MULAI", "SELESAI", "JUAL", "BAYAR", "TANYA", "PESAN",
+             "TIDAK_PAHAM"}
 
 INSTRUKSI = """Kamu mesin ekstraksi untuk pembukuan UMKM batik tulis di Cirebon.
 Pemilik usaha menulis apa adanya: berantakan, disingkat, ragu, sering bercampur
@@ -34,7 +42,7 @@ bahasa Cirebon (Jawa-Cirebonan). Tugasmu mengubahnya menjadi JSON.
 
 Kembalikan HANYA JSON, tanpa penjelasan, dengan bentuk:
 {
-  "jenis": "BELI|MULAI|SELESAI|JUAL|BAYAR|TANYA|TIDAK_PAHAM",
+  "jenis": "BELI|MULAI|SELESAI|JUAL|BAYAR|TANYA|PESAN|TIDAK_PAHAM",
   "maksud": "tawar|peringkat|umum" atau null,   // hanya diisi bila jenis TANYA
   "produk": string atau null,      // nama motif, mis. "megamendung"
   "item": string atau null,        // barang yang dibeli, mis. "kain mori"
@@ -53,8 +61,15 @@ Aturan:
 - Istilah proses batik menandakan tahap pengerjaan:
   nglowong/nembok/nyolet/medel = MULAI atau sedang berjalan;
   nglorod/dilorod/rampung/beres = SELESAI.
-- "payu"/"laku"/"pajeng"/"adol" = JUAL.
+- "payu"/"laku"/"pajeng"/"adol" = JUAL (kain SUDAH terjual).
 - "tuku"/"tumbas"/"beli" = BELI.
+- "dp"/"pesenan"/"pesanan"/"pre-order"/"preorder"/"po"/"pesen"/"order masuk"
+  = PESAN (janji kerja di masa depan, BELUM ada kain yang dikerjakan/terjual).
+  Isi "produk" dan "qty" dari kalimatnya.
+  Contoh: "ada yang DP 3 kain megamendung" -> PESAN, produk=megamendung, qty=3.
+  Contoh: "pesenan 5 wadasan masuk" -> PESAN, produk=wadasan, qty=5.
+  JANGAN keliru dengan JUAL: "laku 3 kain megamendung" itu JUAL, bukan PESAN,
+  karena kainnya sudah selesai dan terjual, bukan baru dipesan.
 - Pertanyaan = TANYA, lalu isi "maksud":
     "tawar"     -> menilai sebuah penawaran ("ada nawar 550rb, ambil ga?")
     "peringkat" -> menanyakan motif mana yang paling menguntungkan
@@ -116,6 +131,13 @@ def _produk_dari_teks(teks: str, motif_dikenal=()) -> str | None:
 
 
 KUNCI_JENIS = [
+    # PESAN diperiksa PALING AWAL. Alasannya: "pesenan 5 wadasan masuk" tidak
+    # mengandung kata kunci JUAL apa pun, tetapi kalimat semacam "DP buat
+    # dikerjakan" bisa memuat kata yang tumpang tindih dengan MULAI ("digarap
+    # nanti"). Kata kuncinya sengaja spesifik (bukan "pesen" saja) supaya
+    # tidak salah menangkap kalimat lain yang kebetulan memuat suku kata itu.
+    ("PESAN",   ["dp ", "dp,", "dp.", "pesenan", "pesanan", "pre-order",
+                 "preorder", "pre order", "order masuk", "orderan masuk"]),
     ("SELESAI", ["nglorod", "dilorod", "lorod", "rampung", "beres", "selesai",
                  "kelar", "udah jadi", "sudah jadi"]),
     ("JUAL",    ["payu", "pajeng", "laku", "adol", "sade", "terjual", "kejual"]),
@@ -181,6 +203,17 @@ def ekstrak_aturan(teks: str, motif_dikenal=()) -> dict:
     if m:
         qty = int(m.group(1))
         harga_list = [h for h in harga_list if h != int(m.group(1)) * 1_000]
+    elif jenis == "PESAN":
+        # Kalimat pesanan sering tidak menyebut satuan sama sekali, dan
+        # angkanya bisa mendahului ATAU mengikuti nama motif:
+        #   "pesenan 5 wadasan masuk"   -> angka di depan
+        #   "ada pre-order sogan 2"     -> angka di belakang
+        # Pola BELI/JUAL tidak perlu ini karena biasanya disertai harga, yang
+        # sudah tertangkap lewat _angka_dari_teks. Di sini cukup angka mandiri
+        # pertama yang bukan bagian dari kata lain.
+        m2 = re.search(r"(?<!\w)(\d{1,3})(?!\w)", t)
+        if m2:
+            qty = int(m2.group(1))
 
     item = None
     for kata in ISTILAH_BATIK:
