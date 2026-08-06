@@ -1,0 +1,25 @@
+#!/bin/sh
+# Menolak push bila uji regresi gagal.
+# Dipasang dengan:  git config core.hooksPath .githooks
+#
+# Lebih murah menahan push selama tiga detik daripada menunggu deploy gagal,
+# lalu menebak-nebak apa yang rusak.
+
+cd "$(dirname "$0")/.." || exit 1
+
+echo ""
+echo "  Menjalankan uji regresi sebelum push..."
+echo ""
+
+python cek.py
+hasil=$?
+
+if [ $hasil -ne 0 ]; then
+  echo ""
+  echo "  PUSH DIBATALKAN — perbaiki dulu yang merah di atas."
+  echo "  Kalau memang disengaja, lewati dengan: git push --no-verify"
+  echo ""
+  exit 1
+fi
+
+exit 0
