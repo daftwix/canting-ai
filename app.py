@@ -661,11 +661,32 @@ with tab_papan:
         simpan_sekarang(b=st.session_state.buku)
         st.rerun()
 
+    # Penghapusan menyeluruh tidak dapat dibatalkan, sedangkan kode usaha
+    # hanyalah pembeda — bukan kunci. Siapa pun yang membuka tautannya bisa
+    # menekan tombol ini. Meminta kode diketik ulang bukan pengamanan
+    # sungguhan, melainkan penghalang sengaja: cukup untuk mencegah
+    # kehilangan karena keliru tekan, tanpa berpura-pura menjadi autentikasi.
     if t3.button("Kosongkan semua data", use_container_width=True):
-        st.session_state.buku = Buku().pakai(P)
-        st.session_state.pop("motif_solver", None)
-        simpan_sekarang(b=st.session_state.buku)
-        st.rerun()
+        st.session_state.minta_hapus = True
+
+    if st.session_state.get("minta_hapus"):
+        st.warning(f"Tindakan ini menghapus **seluruh catatan** dan tidak dapat "
+                   f"dibatalkan. Ketik kode usaha **{st.session_state.kode}** "
+                   f"untuk melanjutkan.", icon="⚠️")
+        h1, h2 = st.columns([2, 1])
+        ketikan = h1.text_input("Kode usaha", label_visibility="collapsed",
+                                placeholder="Ketik kode usaha…")
+        if h2.button("Batalkan", use_container_width=True):
+            st.session_state.minta_hapus = False
+            st.rerun()
+        if ketikan.strip().upper() == st.session_state.kode:
+            st.session_state.buku = Buku().pakai(P)
+            st.session_state.pop("motif_solver", None)
+            st.session_state.minta_hapus = False
+            simpan_sekarang(b=st.session_state.buku)
+            st.rerun()
+        elif ketikan.strip():
+            st.error("Kode tidak cocok.")
 
     # kolom turunan ditampilkan terpisah — tidak boleh diketik, karena dihitung
     if buku.kain:

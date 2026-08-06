@@ -25,27 +25,38 @@ Bagian dalam `{kurung kurawal}` adalah angka/nama yang diisi otomatis
 
 ## A. Yang paling perlu diperiksa 🔴
 
-| # | Kalimat CANTING | Maksudnya | Benar? / Perbaikan |
+> **Sudah direvisi sekali.** Bentuk-bentuk yang paling jelas keliru —
+> kata dasar bahasa Indonesia yang diberi imbuhan Jawa seperti
+> *"dahulukaken"* dan *"dipun urutaken"* — sudah dibuang lebih dulu.
+> Yang tersisa di bawah ini **masih perlu diperiksa**, tetapi risikonya
+> sudah lebih kecil daripada versi pertama.
+
+| # | Kalimat CANTING (sesudah revisi) | Maksudnya | Benar? / Perbaikan |
 |---|---|---|---|
-| 1 | **Dahulukaken** {teratas} | Dahulukan {motif} | ☐ |
-| 2 | **Dipun urutaken** miturut bathi saben dinten kerja — **sanes** miturut rega sade | Diurutkan menurut untung per hari kerja, bukan menurut harga jual | ☐ |
-| 3 | Slot damel **kebak** → **alangan** panjenengan: kapasitas | Slot kerja penuh → kendala Anda: kapasitas | ☐ |
-| 4 | Regi **dipun inggilaken**, dahulukaken bathi saben dinten ingkang paling **inggil** | Harga dinaikkan, dahulukan untung per hari yang paling tinggi | ☐ |
-| 5 | **Sampun** ngindhakaken regi rumiyin; dahulukaken motif **cepet** | **Jangan** menaikkan harga dulu; dahulukan motif cepat | ☐ |
-| 6 | Rega punika {kurang} **ing ngandhap** titik impas | Harga ini {sekian} di bawah titik impas | ☐ |
+| 1 | **Ingkang sae dipun garap rumiyin:** {teratas} | Yang sebaiknya dikerjakan lebih dulu: {motif} | ☐ |
+| 2 | **Urutanipun** miturut bathi saben dinten kerja — **sanes** miturut rega sade | Urutannya menurut untung per hari kerja, bukan menurut harga jual | ☐ |
+| 3 | **Damelan taksih kebak** → **alangan** panjenengan: kapasitas | Pekerjaan masih penuh → kendala Anda: kapasitas | ☐ |
+| 4 | Regi **saged dipun inggilaken**. Ingkang sae dipun garap rumiyin: motif kaliyan bathi paling **inggil** saben dinten | Harga bisa dinaikkan. Yang sebaiknya dikerjakan dulu: motif dengan untung tertinggi per hari | ☐ |
+| 5 | **Taksih wonten** {kosong} dinten ingkang kosong… **Regi dipun jagi rumiyin.** Ingkang sae dipun garap: motif ingkang **enggal rampung** | Masih ada {sekian} hari yang kosong… Harga dijaga dulu. Yang sebaiknya dikerjakan: motif yang cepat selesai | ☐ |
+| 6 | Rega punika **kirang** {kurang} **saking waragadipun** | Harga ini kurang {sekian} dari biayanya | ☐ |
 
-**Catatan penyusun untuk baris di atas:**
+**Catatan penyusun — apa yang sudah diubah dan mengapa:**
 
-- **#1 & #2** — "dahulukaken" dan "dipun urutaken" dibentuk dari kata dasar
-  bahasa Indonesia yang diberi imbuhan Jawa. Kemungkinan besar ini **bukan**
-  bentuk yang wajar; mohon diganti dengan yang benar-benar dipakai sehari-hari.
-- **#3** — kata "slot" itu bahasa Inggris yang diselipkan. Adakah padanan
-  yang lebih wajar (mis. terkait giliran/jadwal kerja perajin)?
-- **#5** — "sampun" di sini dimaksudkan sebagai **larangan** ("jangan"), bukan
-  "sudah". Apakah pembaca akan menangkapnya begitu, atau justru salah arti?
-- **#5 juga** — "cepet" itu ragam ngoko yang tercampur di kalimat bebasan.
-- **#6** — "titik impas" itu istilah Indonesia yang tidak diterjemahkan.
-  Biarkan saja, atau ada sebutan yang lebih dimengerti?
+| Semula | Menjadi | Alasan |
+|---|---|---|
+| *dahulukaken* | *ingkang sae dipun garap rumiyin* | "dahulu" itu kata Indonesia yang dipaksa berimbuhan Jawa |
+| *dipun urutaken* | *urutanipun* | sama; bentuk kata benda lebih aman daripada kata kerja bentukan |
+| *slot damel* | *damelan* | "slot" itu bahasa Inggris yang diselipkan |
+| *sampun ngindhakaken regi* | *regi dipun jagi rumiyin* | "sampun" bermakna ganda: "jangan" atau "sudah" — bisa terbaca terbalik |
+| *motif cepet* | *motif ingkang enggal rampung* | "cepet" itu ngoko, tercampur di kalimat bebasan |
+| *ing ngandhap titik impas* | *kirang … saking waragadipun* | "titik impas" istilah Indonesia yang tak diterjemahkan |
+
+**Yang masih ingin ditanyakan:**
+
+- **#3** — apakah *"alangan"* terdengar wajar untuk "kendala/hambatan",
+  atau ada kata yang lebih lazim dipakai sehari-hari?
+- **#5** — apakah *"regi dipun jagi"* terbaca sebagai "harga ditahan/dijaga
+  supaya tidak naik"? Itu maksudnya.
 
 ---
 

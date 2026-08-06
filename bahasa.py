@@ -194,7 +194,7 @@ TEMPLAT = {
         "jual_untung": "Sampun kacatet. Waragad sedaya {biaya} → bathi {margin}, "
                        "sami kaliyan {per_hari} saben dinten kerja.",
         "jual_rugi": "Sampun kacatet. Waragad sedaya {biaya} → RUGI {margin}. "
-                     "Rega punika {kurang} ing ngandhap titik impas.",
+                     "Rega punika kirang {kurang} saking waragadipun.",
         "bayar": "Sampun kacatet: wedalan {kategori} {nominal}.",
         "tanya_terima": "Waragad sedaya {produk} {biaya}. Panawaran {tawaran} "
                         "taksih bathi {margin} ({per_hari} saben dinten kerja). "
@@ -205,9 +205,9 @@ TEMPLAT = {
                             "Cekap sebutaken angkanipun, tuladha \"850ewu\".",
         "beli_tanpa_harga": "{item} sampun kacatet. Telas pinten? "
                             "Cekap sebutaken angkanipun, tuladha \"400ewu\".",
-        "tanya_peringkat": "Dipun urutaken miturut bathi saben dinten kerja — sanes "
-                           "miturut rega sade:\n{daftar}\n\nDahulukaken {teratas}. "
-                           "{catatan}",
+        "tanya_peringkat": "Urutanipun miturut bathi saben dinten kerja — sanes "
+                           "miturut rega sade:\n{daftar}\n\nIngkang sae dipun garap "
+                           "rumiyin: {teratas}. {catatan}",
         "peringkat_kosong": "Dereng wonten kain pajeng ingkang kacatet, dados "
                             "urutanipun dereng saged kaétang.",
         "tanya_umum": "Ingkang saged kula wangsuli sapunika:\n"
@@ -218,12 +218,13 @@ TEMPLAT = {
         "tidak_paham": "Nyuwun pangapunten, kula dereng mangertos. "
                        "Saged dipun wangsuli mawi ukara sanes?",
         "ringkasan_judul": "Ringkesan minggu punika",
-        "kendala_kapasitas": "Slot damel kebak → alangan panjenengan: kapasitas. "
-                             "Regi dipun inggilaken, dahulukaken bathi saben dinten "
-                             "ingkang paling inggil.",
-        "kendala_permintaan": "Slot damel kosong {kosong} dinten → alangan "
-                              "panjenengan: pesenan, sanes kapasitas. Sampun "
-                              "ngindhakaken regi rumiyin; dahulukaken motif cepet.",
+        "kendala_kapasitas": "Damelan taksih kebak → alangan panjenengan: kapasitas. "
+                             "Regi saged dipun inggilaken. Ingkang sae dipun garap "
+                             "rumiyin: motif kaliyan bathi paling inggil saben dinten.",
+        "kendala_permintaan": "Taksih wonten {kosong} dinten ingkang kosong → alangan "
+                              "panjenengan: pesenan, sanes kapasitas. Regi dipun jagi "
+                              "rumiyin. Ingkang sae dipun garap: motif ingkang enggal "
+                              "rampung.",
     },
 }
 
