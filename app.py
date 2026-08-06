@@ -564,10 +564,11 @@ with tab_papan:
     with kiri:
         kapasitas_penuh = d["kendala"] == "kapasitas"
         warna = "merah" if kapasitas_penuh else "soga"
-        # Kata "KAPASITAS"/"PERMINTAAN" diganti kalimat yang langsung berarti
-        # bagi pemilik usaha. Istilahnya boleh benar secara teori, tetapi kalau
-        # harus dijelaskan lebih dulu, ia gagal sebagai antarmuka.
-        nama = "WAKTU KERJA PENUH" if kapasitas_penuh else "PESANAN KURANG"
+        # Label sengaja dibiarkan SATU KATA. Sempat dipanjangkan menjadi
+        # "WAKTU KERJA PENUH"/"PESANAN KURANG" agar lebih jelas, tetapi label
+        # panjang kehilangan ketegasannya. Kejelasannya sudah ditanggung baris
+        # penjelas di bawahnya, yang memang ditulis sehari-hari.
+        nama = "KAPASITAS" if kapasitas_penuh else "PERMINTAAN"
         ket = ("pesanan lebih banyak daripada yang sanggup dikerjakan"
                if kapasitas_penuh
                else f"masih ada {d['slot_kosong']:.0f} hari kerja yang kosong")
