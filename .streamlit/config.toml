@@ -1,0 +1,12 @@
+[theme]
+# Palet sama dengan deck: biru Bank Indonesia + soga batik
+primaryColor = "#0B4EA2"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#FDF8F0"
+textColor = "#1A1A1A"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true
